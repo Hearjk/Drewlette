@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face-Off Selection Wheel</title>
+  
+  <!-- Add Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                  url('golf-background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      font-family: 'Permanent Marker', cursive;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    h1 {
+      font-family: 'Bangers', cursive;
+      font-size: 48px;
+      letter-spacing: 2px;
+      text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+      margin-bottom: 30px;
+    }
+    
+    .container {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      margin-bottom: 20px;
+    }
+    
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+      width: 80%;
+      max-width: 500px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #f39c12;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-family: 'Permanent Marker', cursive;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    button:hover {
+      background-color: #e67e22;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .result {
+      font-size: 24px;
+      font-weight: bold;
+      min-height: 60px;
+      margin-top: 10px;
+      text-align: center;
+      font-family: 'Bangers', cursive;
+      letter-spacing: 1px;
+    }
+    
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      max-width: 500px;
+    }
+    
+    .number-stat {
+      padding: 5px 10px;
+      background-color: #333;
+      border-radius: 5px;
+      text-align: center;
+    }
+    
+    .participants {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+      max-width: 500px;
+    }
+    
+    .participant-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background-color: #2c3e50;
+      padding: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .participant-toggle.active {
+      background-color: #27ae60;
+    }
+    
+    .participant-toggle.inactive {
+      background-color: #c0392b;
+      text-decoration: line-through;
+    }
+    
+    .matchup {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      font-family: 'Bangers', cursive;
+      letter-spacing: 1px;
+    }
+    
+    .vs {
+      padding: 5px 10px;
+      background-color: #e74c3c;
+      border-radius: 5px;
+    }
+    
+    .beer {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .instructions {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      max-width: 500px;
+    }
+    
+    .reset-button {
+      background-color: #e74c3c;
+    }
+    
+    .reset-button:hover {
+      background-color: #c0392b;
+    }
+    
+    .beer-shower {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .beer-particle {
+      position: absolute;
+      animation: fall linear forwards;
+    }
+    
+    @keyframes fall {
+      to {
+        transform: translate(var(--end-x), var(--end-y)) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    
+    .spin-count {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    
+    .countdown {
+      font-size: 72px;
+      font-weight: bold;
+      color: #f39c12;
+      text-align: center;
+      margin: 20px 0;
+      display: none;
+      font-family: 'Bangers', cursive;
+      text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+    }
+    
+    .start-button {
+      background-color: #27ae60;
+      display: none;
+      margin: 20px auto;
+    }
+    
+    .start-button:hover {
+      background-color: #219a52;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">
+    <h1>Drewlette</h1>
+    <svg class="beer" width="40" height="40" viewBox="0 0 40 40">
+      <path d="M12,5 L28,5 L30,10 L30,30 Q30,35 25,35 L15,35 Q10,35 10,30 L10,10 Z" fill="#f39c12" />
+      <path d="M12,5 L28,5 L30,10 L30,15 L10,15 L10,10 Z" fill="white" fill-opacity="0.8" />
+      <path d="M32,10 Q37,12 37,18 L37,22 Q37,25 34,25 L30,25 L30,10 Z" fill="#f39c12" />
+    </svg>
+  </div>
+  
+  <div class="instructions">
+    <p>Toggle participants by clicking their names. Spin once to select first person, then again to select the second person for the face-off.</p>
+  </div>
+  
+  <div class="participants" id="participants">
+    <!-- Participant toggles will be added here -->
+  </div>
+  
+  <div class="container">
+    <svg id="roulette" width="500" height="500" viewBox="0 0 500 500">
+      <!-- Wheel background -->
+      <defs>
+        <pattern id="beerPattern" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <path d="M12,5 L28,5 L30,10 L30,30 Q30,35 25,35 L15,35 Q10,35 10,30 L10,10 Z" fill="#f39c12" fill-opacity="0.1" />
+            <path d="M12,5 L28,5 L30,10 L30,15 L10,15 L10,10 Z" fill="white" fill-opacity="0.05" />
+          </svg>
+        </pattern>
+      </defs>
+      
+      <circle cx="250" cy="250" r="200" fill="url(#beerPattern)" stroke="#deb887" stroke-width="5" />
+      
+      <!-- Sections group -->
+      <g id="sections"></g>
+      
+      <!-- Center circle -->
+      <circle cx="250" cy="250" r="50" fill="#deb887" stroke="#000" stroke-width="2" />
+      <text id="spinCount" x="250" y="250" text-anchor="middle" dominant-baseline="middle" fill="#000" font-size="22" font-weight="bold">SPIN</text>
+      
+      <!-- Outer rim for ball boundary -->
+      <circle cx="250" cy="250" r="200" fill="none" stroke="#deb887" stroke-width="5" />
+      
+      <!-- Ball -->
+      <circle id="ball" cx="390" cy="250" r="12" fill="#ffffff" stroke="#000" stroke-width="1" />
+    </svg>
+  </div>
+  
+  <div class="controls">
+    <div class="spin-count" id="spinCountText">Ready for first selection</div>
+    <button id="spinButton">Spin the Wheel</button>
+    <button id="resetButton" class="reset-button" disabled>Reset Selections</button>
+    <div class="result" id="result"></div>
+  </div>
+  
+  <div class="matchup" id="matchup"></div>
+  
+  <div class="stats" id="stats"></div>
+  
+  <div class="beer-shower" id="beerShower"></div>
+  
+  <button id="startButton" class="start-button">START!</button>
+  <div id="countdown" class="countdown"></div>
+  
+  <script>
+    const svg = document.getElementById('roulette');
+    const sectionsGroup = document.getElementById('sections');
+    const ball = document.getElementById('ball');
+    const spinButton = document.getElementById('spinButton');
+    const resetButton = document.getElementById('resetButton');
+    const resultDisplay = document.getElementById('result');
+    const statsDisplay = document.getElementById('stats');
+    const participantsContainer = document.getElementById('participants');
+    const matchupDisplay = document.getElementById('matchup');
+    const spinCountText = document.getElementById('spinCountText');
+    const spinCountCenter = document.getElementById('spinCount');
+    const beerShower = document.getElementById('beerShower');
+    const startButton = document.getElementById('startButton');
+    const countdownDisplay = document.getElementById('countdown');
+    
+    // List of all possible participants
+    const allParticipants = [
+      'Austin', 'Bryan', 'Cameron', 'Chris', 
+      'Curtis', 'Drew', 'Jon', 'Stephan', 
+      'Zach', 'James', 'HS', 'HS2'
+    ];
+    
+    // Colors for the wheel
+    const colors = [
+      '#e74c3c', '#3498db', '#2ecc71', '#f39c12', 
+      '#9b59b6', '#1abc9c', '#d35400', '#34495e',
+      '#c0392b', '#2980b9', '#27ae60', '#f1c40f'
+    ];
+    
+    // Keep track of active participants
+    let activeParticipants = [...allParticipants];
+    
+    // Variables for wheel and animation
+    const centerX = 250;
+    const centerY = 250;
+    const radius = 200;
+    const innerRadius = 50;
+    const ballRadius = 12;
+    
+    let wheelRotation = 0;
+    let ballX = 390;
+    let ballY = 250;
+    let ballVelX = 0;
+    let ballVelY = 0;
+    let isSpinning = false;
+    let animationId = null;
+    let selectedNames = [];
+    let stats = {};
+    let sectionElements = [];
+    let textElements = [];
+    let spinCount = 0;
+    
+    // Physics constants
+    const gravity = 0.05;
+    const friction = 0.99;
+    const bounceFactor = 0.85;
+    
+    // Initialize statistics
+    for (let i = 0; i < allParticipants.length; i++) {
+      stats[allParticipants[i]] = 0;
+    }
+    
+    // Create participant toggles
+    function createParticipantToggles() {
+      participantsContainer.innerHTML = '';
+      
+      allParticipants.forEach(name => {
+        const toggle = document.createElement('div');
+        toggle.className = 'participant-toggle active';
+        toggle.textContent = name;
+        toggle.setAttribute('data-name', name);
+        
+        toggle.addEventListener('click', () => {
+          if (isSpinning) return;
+          
+          toggle.classList.toggle('active');
+          toggle.classList.toggle('inactive');
+          
+          if (toggle.classList.contains('active')) {
+            activeParticipants.push(name);
+          } else {
+            const index = activeParticipants.indexOf(name);
+            if (index !== -1) {
+              activeParticipants.splice(index, 1);
+            }
+          }
+          
+          updateWheel();
+        });
+        
+        participantsContainer.appendChild(toggle);
+      });
+    }
+    
+    // Function to recreate the wheel based on active participants
+    function updateWheel() {
+      // Clear existing sections
+      sectionsGroup.innerHTML = '';
+      sectionElements = [];
+      textElements = [];
+      
+      if (activeParticipants.length === 0) {
+        resultDisplay.textContent = 'Please select at least one participant';
+        spinButton.disabled = true;
+        return;
+      } else {
+        resultDisplay.textContent = '';
+        spinButton.disabled = false;
+      }
+      
+      const sections = activeParticipants.length;
+      const sectionAngle = 360 / sections;
+      
+      // Create wheel sections
+      for (let i = 0; i < sections; i++) {
+        const startAngle = i * sectionAngle;
+        const endAngle = (i + 1) * sectionAngle;
+        
+        const startRad = (startAngle - 90) * Math.PI / 180;
+        const endRad = (endAngle - 90) * Math.PI / 180;
+        
+        const x1 = centerX + innerRadius * Math.cos(startRad);
+        const y1 = centerY + innerRadius * Math.sin(startRad);
+        const x2 = centerX + radius * Math.cos(startRad);
+        const y2 = centerY + radius * Math.sin(startRad);
+        const x3 = centerX + radius * Math.cos(endRad);
+        const y3 = centerY + radius * Math.sin(endRad);
+        const x4 = centerX + innerRadius * Math.cos(endRad);
+        const y4 = centerY + innerRadius * Math.sin(endRad);
+        
+        const section = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        section.setAttribute('d', `M ${x1},${y1} L ${x2},${y2} A ${radius},${radius} 0 0,1 ${x3},${y3} L ${x4},${y4} A ${innerRadius},${innerRadius} 0 0,0 ${x1},${y1}`);
+        section.setAttribute('fill', colors[i % colors.length]);
+        section.setAttribute('stroke', '#deb887');
+        section.setAttribute('stroke-width', '1');
+        section.setAttribute('data-name', activeParticipants[i]);
+        sectionsGroup.appendChild(section);
+        sectionElements.push(section);
+        
+        // Add section names (text)
+        const textAngle = (startAngle + endAngle) / 2 - 90;
+        const textRad = textAngle * Math.PI / 180;
+        const textDistance = innerRadius + (radius - innerRadius) / 2;
+        const textX = centerX + textDistance * Math.cos(textRad);
+        const textY = centerY + textDistance * Math.sin(textRad);
+        
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', textX);
+        text.setAttribute('y', textY);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'middle');
+        text.setAttribute('fill', 'white');
+        text.setAttribute('font-size', '16');
+        text.setAttribute('font-weight', 'bold');
+        text.textContent = activeParticipants[i];
+        
+        // Rotate text for better readability
+        text.setAttribute('transform', `rotate(${textAngle}, ${textX}, ${textY})`);
+        
+        sectionsGroup.appendChild(text);
+        textElements.push(text);
+      }
+    }
+    
+    // Function to create beer particle animation
+    function createBeerShower() {
+      beerShower.style.display = 'block';
+      beerShower.innerHTML = '';
+      
+      const beerCount = 50;
+      
+      for (let i = 0; i < beerCount; i++) {
+        const beer = document.createElement('div');
+        beer.className = 'beer-particle';
+        
+        const size = 20 + Math.random() * 20;
+        const startX = Math.random() * window.innerWidth;
+        const startY = -100;
+        const endX = (Math.random() - 0.5) * 200;
+        const endY = window.innerHeight + 200;
+        const duration = 3 + Math.random() * 5;
+        const delay = Math.random() * 2;
+        
+        beer.innerHTML = `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <path d="M12,5 L28,5 L30,10 L30,30 Q30,35 25,35 L15,35 Q10,35 10,30 L10,10 Z" fill="#f39c12" />
+            <path d="M12,5 L28,5 L30,10 L30,15 L10,15 L10,10 Z" fill="white" fill-opacity="0.8" />
+          </svg>
+        `;
+        
+        beer.style.left = `${startX}px`;
+        beer.style.top = `${startY}px`;
+        beer.style.setProperty('--end-x', `${endX}px`);
+        beer.style.setProperty('--end-y', `${endY}px`);
+        beer.style.animationDuration = `${duration}s`;
+        beer.style.animationDelay = `${delay}s`;
+        
+        beerShower.appendChild(beer);
+      }
+      
+      // Hide after animation completes
+      setTimeout(() => {
+        beerShower.style.display = 'none';
+      }, 8000);
+    }
+    
+    // Function to add random "bumps" to ball velocity
+    function addRandomBumps() {
+      const bumpStrength = 0.2 + Math.random() * 0.4;
+      const angle = Math.random() * 2 * Math.PI;
+      
+      ballVelX += Math.cos(angle) * bumpStrength;
+      ballVelY += Math.sin(angle) * bumpStrength;
+    }
+    
+    // Function to check if ball collides with the wheel boundaries
+    function checkCollision() {
+      // Distance from ball center to wheel center
+      const dx = ballX - centerX;
+      const dy = ballY - centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Check collision with outer boundary
+      if (distance + ballRadius > radius) {
+        // Calculate bounce angle
+        const angle = Math.atan2(dy, dx);
+        
+        // Reflect velocity
+        const speed = Math.sqrt(ballVelX * ballVelX + ballVelY * ballVelY);
+        const bounceVelX = -Math.cos(angle) * speed * bounceFactor;
+        const bounceVelY = -Math.sin(angle) * speed * bounceFactor;
+        
+        // Apply new velocity with slight randomization
+        ballVelX = bounceVelX + (Math.random() - 0.5) * 0.3;
+        ballVelY = bounceVelY + (Math.random() - 0.5) * 0.3;
+        
+        // Adjust position to be inside boundary
+        const newDistance = radius - ballRadius;
+        ballX = centerX + Math.cos(angle) * newDistance;
+        ballY = centerY + Math.sin(angle) * newDistance;
+        
+        return true;
+      }
+      
+      // Check collision with inner boundary (center circle)
+      if (distance - ballRadius < innerRadius) {
+        // Calculate bounce angle
+        const angle = Math.atan2(dy, dx);
+        
+        // Reflect velocity
+        const speed = Math.sqrt(ballVelX * ballVelX + ballVelY * ballVelY);
+        const bounceVelX = Math.cos(angle) * speed * bounceFactor;
+        const bounceVelY = Math.sin(angle) * speed * bounceFactor;
+        
+        // Apply new velocity with slight randomization
+        ballVelX = bounceVelX + (Math.random() - 0.5) * 0.3;
+        ballVelY = bounceVelY + (Math.random() - 0.5) * 0.3;
+        
+        // Adjust position to be outside center circle
+        const newDistance = innerRadius + ballRadius;
+        ballX = centerX + Math.cos(angle) * newDistance;
+        ballY = centerY + Math.sin(angle) * newDistance;
+        
+        return true;
+      }
+      
+      return false;
+    }
+    
+    // Function to determine which section the ball is in
+    function getCurrentSection() {
+      // Get the angle of the ball relative to the wheel center
+      let ballAngle = Math.atan2(ballY - centerY, ballX - centerX) * 180 / Math.PI;
+      
+      // Convert to 0-360 range
+      if (ballAngle < 0) {
+        ballAngle += 360;
+      }
+      
+      // Adjust for wheel rotation
+      let adjustedAngle = (ballAngle + 90 - wheelRotation) % 360;
+      if (adjustedAngle < 0) {
+        adjustedAngle += 360;
+      }
+      
+      // Determine the section
+      const sectionIndex = Math.floor(adjustedAngle / (360 / activeParticipants.length));
+      return activeParticipants[sectionIndex];
+    }
+    
+    // Function to attract ball to the target section in the final phase
+    function attractBallToSection(targetName, phase) {
+      const targetIndex = activeParticipants.indexOf(targetName);
+      const sectionAngle = 360 / activeParticipants.length;
+      const sectionCenterAngle = (targetIndex * sectionAngle + sectionAngle / 2 + 90) % 360;
+      const angleRad = ((sectionCenterAngle + wheelRotation) % 360) * Math.PI / 180;
+      
+      // Calculate target position at 75% of the way from inner to outer radius
+      const targetDistance = innerRadius + (radius - innerRadius) * 0.75;
+      const targetX = centerX + targetDistance * Math.cos(angleRad);
+      const targetY = centerY + targetDistance * Math.sin(angleRad);
+      
+      // Vector from ball to target
+      const dx = targetX - ballX;
+      const dy = targetY - ballY;
+      
+      // Apply attraction force (stronger as phase approaches 1)
+      const attractionStrength = 0.005 + 0.15 * phase;
+      ballVelX += dx * attractionStrength;
+      ballVelY += dy * attractionStrength;
+    }
+    
+    // Spin button event listener
+    spinButton.addEventListener('click', () => {
+      if (isSpinning || activeParticipants.length === 0) return;
+      
+      spinCount++;
+      spinCountCenter.textContent = spinCount;
+      
+      // Update spin count text
+      if (spinCount === 1) {
+        spinCountText.textContent = 'Selecting first participant...';
+      } else if (spinCount === 2) {
+        spinCountText.textContent = 'Selecting second participant...';
+      }
+      
+      isSpinning = true;
+      spinButton.disabled = true;
+      resultDisplay.textContent = '';
+      
+      // If this is the second spin, disable the participant toggles
+      if (spinCount === 2) {
+        const toggles = document.querySelectorAll('.participant-toggle');
+        toggles.forEach(toggle => {
+          toggle.style.pointerEvents = 'none';
+          toggle.style.opacity = '0.7';
+        });
+      }
+      
+      // Reset ball position to outer edge
+      const startAngle = Math.random() * 2 * Math.PI;
+      ballX = centerX + (radius - ballRadius - 5) * Math.cos(startAngle);
+      ballY = centerY + (radius - ballRadius - 5) * Math.sin(startAngle);
+      ball.setAttribute('cx', ballX);
+      ball.setAttribute('cy', ballY);
+      
+      // Set initial velocity (tangential to the wheel with randomness)
+      const speed = 3 + Math.random() * 4;
+      ballVelX = -Math.sin(startAngle) * speed + (Math.random() - 0.5) * 2;
+      ballVelY = Math.cos(startAngle) * speed + (Math.random() - 0.5) * 2;
+      
+      // Random wheel rotation speed
+      const wheelSpeed = 2 + Math.random() * 3;
+      
+      // Predetermine winning participant (excluding already selected)
+      let availableParticipants = [...activeParticipants];
+      if (selectedNames.length > 0) {
+        availableParticipants = availableParticipants.filter(name => !selectedNames.includes(name));
+      }
+      
+      // If there are no available participants left (should not happen in normal use)
+      if (availableParticipants.length === 0) {
+        availableParticipants = [...activeParticipants];
+      }
+      
+      const targetIndex = Math.floor(Math.random() * availableParticipants.length);
+      const targetName = availableParticipants[targetIndex];
+      
+      // Animation variables
+      let startTime = null;
+      const spinDuration = 6000 + Math.random() * 2000; // between 6 and 8 seconds
+      let lastBumpTime = 0;
+      
+      function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / spinDuration, 1);
+        
+        // Calculate wheel rotation with easing
+        const easedProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
+        const currentWheelSpeed = wheelSpeed * (1 - easedProgress);
+        wheelRotation += currentWheelSpeed;
+        wheelRotation %= 360;  // Keep rotation within 0-360 degrees
+        
+        // Rotate wheel elements
+        sectionsGroup.setAttribute('transform', `rotate(${wheelRotation}, ${centerX}, ${centerY})`);
+        
+        // Phases of animation
+        if (progress < 0.7) {
+          // Free bouncing phase
+          // Apply gravity towards center (weaker in early phase)
+          const gravityFactor = 0.03 + progress * 0.1;
+          const dx = centerX - ballX;
+          const dy = centerY - ballY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          ballVelX += (dx / distance) * gravity * gravityFactor;
+          ballVelY += (dy / distance) * gravity * gravityFactor;
+          
+          // Apply wheel spin force to ball (tangential)
+          const angle = Math.atan2(ballY - centerY, ballX - centerX);
+          ballVelX += -Math.sin(angle) * currentWheelSpeed * 0.05;
+          ballVelY += Math.cos(angle) * currentWheelSpeed * 0.05;
+          
+          // Add random bumps periodically
+          if (elapsed - lastBumpTime > 300) {  // Every 300ms
+            addRandomBumps();
+            lastBumpTime = elapsed;
+          }
+        } else {
+          // Final phase - guide ball to target section
+          const settleFactor = (progress - 0.7) / 0.3; // 0 to 1 during final phase
+          attractBallToSection(targetName, settleFactor);
+          
+          // Additional friction in final phase
+          ballVelX *= 0.97;
+          ballVelY *= 0.97;
+        }
+        
+        // Apply physics
+        ballVelX *= friction;
+        ballVelY *= friction;
+        
+        ballX += ballVelX;
+        ballY += ballVelY;
+        
+        // Check for collisions with boundaries
+        checkCollision();
+        
+        // Update ball position
+        ball.setAttribute('cx', ballX);
+        ball.setAttribute('cy', ballY);
+        
+        if (progress < 1) {
+          animationId = requestAnimationFrame(animate);
+        } else {
+          // Animation complete
+          const winningName = getCurrentSection();
+          selectedNames.push(winningName);
+          
+          // Update stats
+          stats[winningName] = (stats[winningName] || 0) + 1;
+          updateStats();
+          
+          // Show result
+          if (spinCount === 1) {
+            resultDisplay.textContent = `First selected: ${winningName}`;
+            spinButton.disabled = false;
+          } else if (spinCount === 2) {
+            resultDisplay.textContent = `Second selected: ${winningName}`;
+            
+            // Create matchup display
+            matchupDisplay.innerHTML = `
+              <div>${selectedNames[0]}</div>
+              <div class="vs">VS</div>
+              <div>${selectedNames[1]}</div>
+            `;
+            
+            // Show start button
+            startButton.style.display = 'block';
+            
+            // Enable reset button
+            resetButton.disabled = false;
+          }
+          
+          // Reset spinning state
+          isSpinning = false;
+        }
+      }
+      
+      animationId = requestAnimationFrame(animate);
+    });
+    
+    // Reset button event listener
+    resetButton.addEventListener('click', () => {
+      // Reset selection state
+      selectedNames = [];
+      spinCount = 0;
+      spinCountCenter.textContent = 'SPIN';
+      spinCountText.textContent = 'Ready for first selection';
+      
+      // Clear results and matchup
+      resultDisplay.textContent = '';
+      matchupDisplay.innerHTML = '';
+      
+      // Enable spin button
+      spinButton.disabled = false;
+      
+      // Disable reset button
+      resetButton.disabled = true;
+      
+      // Re-enable participant toggles
+      const toggles = document.querySelectorAll('.participant-toggle');
+      toggles.forEach(toggle => {
+        toggle.style.pointerEvents = 'auto';
+        toggle.style.opacity = '1';
+      });
+      
+      // Hide countdown and start button
+      countdownDisplay.style.display = 'none';
+      startButton.style.display = 'none';
+    });
+    
+    function updateStats() {
+      statsDisplay.innerHTML = '';
+      
+      // Sort participants by selection count
+      const sortedStats = Object.entries(stats)
+        .filter(([name]) => activeParticipants.includes(name))
+        .sort((a, b) => b[1] - a[1]);
+      
+      for (const [name, count] of sortedStats) {
+        if (count > 0) {
+          const statElement = document.createElement('div');
+          statElement.className = 'number-stat';
+          statElement.textContent = `${name}: ${count}`;
+          
+          // Highlight if currently selected
+          if (selectedNames.includes(name)) {
+            statElement.style.backgroundColor = '#4CAF50';
+          }
+          
+          statsDisplay.appendChild(statElement);
+        }
+      }
+    }
+    
+    // Add countdown function
+    function startCountdown() {
+      let count = 3;
+      countdownDisplay.style.display = 'block';
+      
+      function updateCount() {
+        if (count > 0) {
+          countdownDisplay.textContent = count;
+          count--;
+          setTimeout(updateCount, 1000);
+        } else {
+          countdownDisplay.textContent = 'CHUG!';
+          createBeerShower(); // Show beer animation
+          setTimeout(() => {
+            countdownDisplay.style.display = 'none';
+          }, 2000);
+        }
+      }
+      
+      updateCount();
+    }
+    
+    // Add start button event listener
+    startButton.addEventListener('click', () => {
+      startButton.style.display = 'none';
+      startCountdown();
+    });
+    
+    // Initialize
+    createParticipantToggles();
+    updateWheel();
+  </script>
+</body>
+</html>
